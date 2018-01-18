@@ -45,6 +45,20 @@ $ run-headless --url 'http://google.com' --script 'console.log(document.title); 
 Google
 ```
 
+### CI
+
+Headless browsers are well suited to running in CI environments. Configurations vary, but this `.travis.yml` file should get you going with [Travis](https://travis-ci.org):
+
+```yml
+sudo: required
+language: node_js
+addons:
+ chrome: stable
+node_js:
+  - node
+  - '8'
+```
+
 ### Writing Tests
 
 You can use any test runner you like that works in a browser and outputs to the console. Just make sure to run `window.close()` when all tests have completed. When writing tests that run in Node.js and the browser you may include the convenience helper `run-headless/end` to do this for you as needed.
