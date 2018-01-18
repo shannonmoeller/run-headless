@@ -1,6 +1,6 @@
 {
   "name": "run-headless",
-  "version": "1.0.0-1",
+  "version": "1.0.0-2",
   "description": "Run code in headless Chrome.",
   "scripts": {
     "test": "run-s test-*",
