@@ -12,7 +12,7 @@ $ npm install --global run-headless
 
 ## Usage
 
-```
+```man
 Usage: run-headless [options]
 
 Options:

@@ -1,7 +1,7 @@
 {
   "name": "run-headless",
   "version": "1.0.0-2",
-  "description": "Run code in headless Chrome.",
+  "description": "The easiest way of running code in a modern headless browser environment.",
   "scripts": {
     "test": "run-s test-*",
     "test-node": "nyc tape test/index.js | tap-diff",
