@@ -1,0 +1,46 @@
+#!/usr/bin/env node
+
+const minimist = require('minimist');
+const run = require('..');
+
+const args = minimist(process.argv.slice(2));
+const usage = `
+Usage: run-headless [options]
+
+Options:
+
+      --html <s>    Literal HTML to use as harness.
+      --script <s>  Literal JavaScript to execute (default: stdin).
+      --url <s>     URL of page containing tests to run.
+  -h, --help        Print help.
+`;
+
+function main() {
+	if (args.h || args.help) {
+		console.log(usage);
+
+		return;
+	}
+
+	if (process.stdin.isTTY) {
+		run(args);
+
+		return;
+	}
+
+	let script = '';
+
+	process.stdin.on('data', chunk => {
+		script += chunk;
+	});
+
+	process.stdin.on('end', () => {
+		run(Object.assign({script}, args));
+	});
+}
+
+main();
+
+process.on('unhandledRejection', err => {
+	throw err;
+});
