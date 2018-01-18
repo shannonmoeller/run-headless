@@ -1,10 +1,7 @@
-sudo: false
+sudo: required
 language: node_js
-dist: trusty
 addons:
-  apt:
-    packages:
-      - libnss3
+ chrome: stable
 node_js:
   - '9'
   - '8'
