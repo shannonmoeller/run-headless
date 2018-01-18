@@ -139,6 +139,12 @@ Standards for this project, including tests, code coverage, and semantics are en
 $ npm test
 ```
 
+### Acknowledgements
+
+- [browser-run](http://npm.im/browser-run)
+- [run-browser](http://npm.im/run-browser)
+- [karma](http://npm.im/karma)
+
 ----
 
 © Shannon Moeller <me@shannonmoeller.com> (shannonmoeller.com)
