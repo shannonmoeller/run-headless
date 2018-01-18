@@ -44,44 +44,42 @@ async function run({html, script, url}) {
 	const browser = await puppeteer.launch();
 	const page = await browser.newPage();
 
-	async function close(target) {
-		// Are we done yet?
-		if (target && await target.page() !== page) {
-			return;
-		}
-
-		// Pass-through coverage report.
-		if (global.__coverage__) {
-			Object.assign(
-				global.__coverage__,
-				await page.waitForFunction('window.__coverage__')
-			);
-		}
-
-		// All done.
-		await browser.close();
-	}
-
 	page.on('console', onConsole);
 	page.on('error', onError);
 	page.on('pageerror', onError);
-	browser.on('targetdestroyed', close);
 
-	if (url) {
-		await page.goto(url);
-	} else {
-		await page.setContent(html);
-	}
+	const done = new Promise(async resolve => {
+		await page.exposeFunction('close', async () => {
+			let coverage;
 
-	if (script) {
-		await page.addScriptTag({content: script});
-	}
+			if (global.__coverage__) {
+				coverage = await page.waitForFunction('window.__coverage__');
 
-	return {
-		browser,
-		page,
-		close
-	};
+				Object.assign(global.__coverage__, coverage);
+			}
+
+			await page.close();
+			await browser.close();
+
+			resolve(coverage);
+		});
+
+		if (url) {
+			await page.goto(url, {waitUntil: 'networkidle0'});
+		} else {
+			await page.setContent(html);
+		}
+
+		if (script) {
+			await page.addScriptTag({content: script});
+		}
+	});
+
+	done.close = () => page.evaluate(() => window.close());
+	done.browser = browser;
+	done.page = page;
+
+	return done;
 }
 
 module.exports = run;

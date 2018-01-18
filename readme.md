@@ -76,7 +76,7 @@ All of 1 tests passed!
 
 ## API
 
-### `run(options): Promise<Runner>`
+### `run(options): Runner`
 
 - `options` `{Object}` - You must specify at least one of the following:
   - `html` `{String}` - Optional. Literal HTML use to use as test harness.
@@ -115,9 +115,13 @@ $ nyc node test.js
 
 ### Runner Methods
 
-#### `.close()`
+#### `.then()` and `.catch()`
 
-Can be used to explicitly close the headless browser, though it's better to call `window.close()` from within your tests.
+`Runner` is a thenable and awaitable [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) object. It resolves when execution has finished and the browser is closed.
+
+#### `.close(): Promise`
+
+Can be used to explicitly close the browser, though it's better to call `window.close()` from within the script.
 
 ### Runner Properties
 
