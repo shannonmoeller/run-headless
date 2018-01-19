@@ -1,6 +1,6 @@
 {
   "name": "run-headless",
-  "version": "1.0.0-7",
+  "version": "1.0.0-8",
   "description": "The easiest way of running code in a modern headless browser environment.",
   "scripts": {
     "test": "run-s test-*",
