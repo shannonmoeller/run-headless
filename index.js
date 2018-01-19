@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer');
 
-const CLOSE_GLOBAL = 'window.__close__';
-const COVERAGE_GLOBAL = 'window.__coverage__';
+const CLOSE_GLOBAL = '__close__';
+const COVERAGE_GLOBAL = '__coverage__';
 
 const defaultHtml = `
 <!doctype html>
@@ -12,12 +12,6 @@ const defaultHtml = `
 	</head>
     <body></body>
 </html>
-`;
-
-const closer = `
-	window.close = function() {
-		${CLOSE_GLOBAL} = true;
-	};
 `;
 
 const consoleTypes = Object
@@ -50,6 +44,10 @@ async function run({html, script, url}) {
 	html = String(html || defaultHtml);
 	script = String(script || '');
 
+	if (script && !script.includes(CLOSE_GLOBAL)) {
+		script += `;window.${CLOSE_GLOBAL}();`;
+	}
+
 	const browser = await puppeteer.launch();
 	const page = await browser.newPage();
 
@@ -58,35 +56,32 @@ async function run({html, script, url}) {
 	page.on('pageerror', onError);
 
 	const done = new Promise(async resolve => {
-		if (url) {
-			await page.goto(url, {waitUntil: 'networkidle2'});
+		async function close() {
+			if (global[COVERAGE_GLOBAL]) {
+				Object.assign(
+					global[COVERAGE_GLOBAL],
+					await page.waitForFunction(`window.${COVERAGE_GLOBAL}`)
+				);
+			}
+
+			await browser.close();
+
+			resolve();
 		}
 
-		await page.evaluate(closer);
+		await page.exposeFunction(CLOSE_GLOBAL, close);
 
-		if (!url) {
+		if (url) {
+			await page.goto(url, {waitUntil: 'networkidle0'});
+		} else {
 			await page.setContent(html);
 		}
 
 		if (script) {
 			await page.addScriptTag({content: script});
 		}
-
-		await page.waitForFunction(CLOSE_GLOBAL);
-
-		if (global.__coverage__) {
-			Object.assign(
-				global.__coverage__,
-				await page.waitForFunction(COVERAGE_GLOBAL)
-			);
-		}
-
-		await browser.close();
-
-		resolve();
 	});
 
-	done.close = () => page.evaluate(() => window.close());
 	done.browser = browser;
 	done.page = page;
 

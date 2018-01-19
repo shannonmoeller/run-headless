@@ -26,10 +26,10 @@ Options:
 ## Examples
 
 ```command
-$ run-headless --script 'console.log("hello world"); window.close();'
+$ run-headless --script 'console.log("hello world")'
 hello world
 
-$ echo 'console.log("hello world"); window.close();' | run-headless
+$ echo 'console.log("hello world")' | run-headless
 hello world
 ```
 
@@ -41,7 +41,7 @@ $ run-headless --url 'http://localhost:3000/tests'
 ```
 
 ```command
-$ run-headless --url 'http://google.com' --script 'console.log(document.title); window.close();'
+$ run-headless --url 'http://google.com' --script 'console.log(document.title)'
 Google
 ```
 
@@ -61,7 +61,7 @@ node_js:
 
 ### Writing Tests
 
-You can use any test runner you like that works in a browser and outputs to the console. Just make sure to run `window.close()` when all tests have completed. When writing tests that run in Node.js and the browser you may include the convenience helper `run-headless/close` to do this for you as needed.
+You can use any test runner you like that works in a browser and outputs to the console. Just make sure to run `window.__close__()` when all tests have completed. When writing tests that run in Node.js and the browser you may include the convenience helper `run-headless/close` to do this for you as needed.
 
 ```js
 // test.js
@@ -132,10 +132,6 @@ $ nyc node test.js
 #### `.then()` and `.catch()`
 
 `Runner` is a thenable and awaitable [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) object. It resolves when execution has finished and the browser is closed.
-
-#### `.close(): Promise`
-
-Can be used to explicitly close the browser, though it's better to call `window.close()` from within the script.
 
 ### Runner Properties
 
