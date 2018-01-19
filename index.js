@@ -13,6 +13,10 @@ const defaultHtml = `
 </html>
 `;
 
+const closer = `
+;window.__close__();
+`;
+
 const consoleTypes = Object
 	.keys(console)
 	.reduce((a, b) => {
@@ -81,6 +85,10 @@ async function runHeadless({html, script, url}) {
 		}
 
 		if (script) {
+			if (!script.includes('__close__')) {
+				script += closer;
+			}
+
 			await page.addScriptTag({content: script});
 		}
 
