@@ -17,9 +17,9 @@ Usage: run-headless [options]
 
 Options:
 
-      --html <s>    Literal HTML to use as tests or test harness.
+      --html <s>    Literal HTML to execute.
       --script <s>  Literal JavaScript to execute (default: stdin).
-      --url <s>     URL of page containing tests to run.
+      --url <s>     URL to load (overrides --html).
   -h, --help        Print help.
 ```
 
@@ -37,12 +37,16 @@ hello world
 $ cat index.js | run-headless
 $ rollup index.js | run-headless
 $ browserify index.js | run-headless
-$ run-headless --url 'http://localhost:3000/tests'
 ```
 
 ```command
-$ run-headless --url 'http://google.com' --script 'console.log(document.title)'
-Google
+$ run-headless --html "<script>console.log('hello world');</script>"
+$ run-headless --html "$(cat index.html)" --script "$(cat index.js)"
+```
+
+```command
+$ run-headless --url "http://localhost:3000/tests"
+$ run-headless --url "http://google.com" --script "console.log(document.title)"
 ```
 
 ### CI
@@ -59,7 +63,7 @@ node_js:
   - '8'
 ```
 
-### Writing Tests
+### Browser Testing
 
 You can use any test runner you like that works in a browser and outputs to the console. Just make sure to run `window.__close__()` when all tests have completed. When writing tests that run in Node.js and the browser you may include the convenience helper `run-headless/close` to do this for you as needed.
 
@@ -93,9 +97,9 @@ All of 1 tests passed!
 ### `run(options): Runner`
 
 - `options` `{Object}` - You must specify at least one of the following:
-  - `html` `{String}` - Optional. Literal HTML use to use as test harness.
-  - `script` `{String}` - Optional. Literal JavaScript to execute.
-  - `url` `{String}` - Optional. URL of page containing tests to run.
+  - `html` `{String}` - Literal HTML to execute.
+  - `script` `{String}` - Literal JavaScript to execute (default: `stdin`).
+  - `url` `{String}` - URL to load (overrides `html`).
 
 The following example starts up a static file server with [express](http://npm.im/express), bundles test scripts with [rollup](http://npm.im/rollup), executes them in a [headless browser](http://npm.im/puppeteer), and prints the output to the console. (Assumes that your rollup config is generating a bundle with [nyc](http://npm.im/nyc)-compatible instrumented code).
 

@@ -2,6 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
 
+const CLOSE_GLOBAL = '__close__';
+const COVERAGE_GLOBAL = '__coverage__';
+
 const defaultHtml = `
 <!doctype html>
 <html lang="en">
@@ -14,7 +17,7 @@ const defaultHtml = `
 `;
 
 const closer = `
-;window.__close__();
+;window.${CLOSE_GLOBAL}();
 `;
 
 const consoleTypes = Object
@@ -44,7 +47,7 @@ function onError(err) {
 }
 
 async function writeCoverage(page) {
-	const coverage = await page.waitForFunction('window.__coverage__');
+	const coverage = await page.waitForFunction(`window.${COVERAGE_GLOBAL}`);
 	const output = await coverage.jsonValue();
 
 	// Filter out irrelevant coverage output.
@@ -55,6 +58,7 @@ async function writeCoverage(page) {
 		}
 	});
 
+	// Assumes `nyc` has created output directory.
 	fs.writeFileSync(
 		path.join(process.cwd(), '.nyc_output', `${Date.now()}.json`),
 		JSON.stringify(output),
@@ -66,6 +70,12 @@ async function runHeadless({html, script, url}) {
 	html = String(html || defaultHtml);
 	script = String(script || '');
 
+	function addCloser() {
+		if (!html.includes(CLOSE_GLOBAL) && !script.includes(CLOSE_GLOBAL)) {
+			script += closer;
+		}
+	}
+
 	const browser = await puppeteer.launch();
 	const page = await browser.newPage();
 
@@ -74,27 +84,27 @@ async function runHeadless({html, script, url}) {
 	page.on('pageerror', onError);
 
 	const closed = new Promise(async resolve => {
-		await page.exposeFunction('__close__', resolve);
+		await page.exposeFunction(CLOSE_GLOBAL, resolve);
 	});
 
 	const done = new Promise(async resolve => {
 		if (url) {
 			await page.goto(url, {waitUntil: 'networkidle0'});
 		} else {
+			addCloser();
+
 			await page.setContent(html);
 		}
 
 		if (script) {
-			if (!script.includes('__close__')) {
-				script += closer;
-			}
+			addCloser();
 
 			await page.addScriptTag({content: script});
 		}
 
 		await closed;
 
-		if (script && script.includes('__coverage__')) {
+		if (script && script.includes(COVERAGE_GLOBAL)) {
 			await writeCoverage(page);
 		}
 

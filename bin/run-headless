@@ -9,9 +9,9 @@ Usage: run-headless [options]
 
 Options:
 
-      --html <s>    Literal HTML to use as harness.
+      --html <s>    Literal HTML to execute.
       --script <s>  Literal JavaScript to execute (default: stdin).
-      --url <s>     URL of page containing tests to run.
+      --url <s>     URL to load (overrides --html).
   -h, --help        Print help.
 `;
 
