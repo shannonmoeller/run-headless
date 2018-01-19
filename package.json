@@ -1,12 +1,12 @@
 {
   "name": "run-headless",
-  "version": "1.0.0-9",
+  "version": "1.0.0-10",
   "description": "The easiest way of running code in a modern headless browser environment.",
   "scripts": {
-    "test": "run-s test-*",
-    "test-node": "nyc tape test/index.js | tap-diff",
+    "test": "nyc run-s test-*",
+    "test-node": "tape test/index.js | tap-diff",
     "test-browser": "browserify test/index.js | bin/run-headless | tap-diff",
-    "test-url": "bin/run-headless --url 'https://google.com' --script 'console.log(document.title)'",
+    "test-url": "bin/run-headless --url 'https://google.com' --script 'console.log(document.title);window.__close__()'",
     "report": "nyc report -r text-lcov | coveralls",
     "pretest": "xo --fix",
     "precommit": "npm run test && git add .",
@@ -31,6 +31,7 @@
     "puppeteer": "^1.0.0"
   },
   "devDependencies": {
+    "blue-tape": "^1.0.0",
     "browserify": "^15.2.0",
     "coveralls": "^3.0.0",
     "husky": "^0.14.3",

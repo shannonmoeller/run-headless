@@ -1,7 +1,6 @@
+const fs = require('fs');
+const path = require('path');
 const puppeteer = require('puppeteer');
-
-const CLOSE_GLOBAL = '__close__';
-const COVERAGE_GLOBAL = '__coverage__';
 
 const defaultHtml = `
 <!doctype html>
@@ -40,13 +39,28 @@ function onError(err) {
 	throw err;
 }
 
-async function run({html, script, url}) {
+async function writeCoverage(page) {
+	const coverage = await page.waitForFunction('window.__coverage__');
+	const output = await coverage.jsonValue();
+
+	// Filter out irrelevant coverage output.
+	// https://github.com/artberri/rollup-plugin-istanbul/issues/9
+	Object.keys(output).forEach(key => {
+		if (!key.includes(path.sep)) {
+			delete output[key];
+		}
+	});
+
+	fs.writeFileSync(
+		path.join(process.cwd(), '.nyc_output', `${Date.now()}.json`),
+		JSON.stringify(output),
+		'utf8'
+	);
+}
+
+async function runHeadless({html, script, url}) {
 	html = String(html || defaultHtml);
 	script = String(script || '');
-
-	if (script && !script.includes(CLOSE_GLOBAL)) {
-		script += `;window.${CLOSE_GLOBAL}();`;
-	}
 
 	const browser = await puppeteer.launch();
 	const page = await browser.newPage();
@@ -55,22 +69,11 @@ async function run({html, script, url}) {
 	page.on('error', onError);
 	page.on('pageerror', onError);
 
+	const closed = new Promise(async resolve => {
+		await page.exposeFunction('__close__', resolve);
+	});
+
 	const done = new Promise(async resolve => {
-		async function close() {
-			if (global[COVERAGE_GLOBAL]) {
-				Object.assign(
-					global[COVERAGE_GLOBAL],
-					await page.waitForFunction(`window.${COVERAGE_GLOBAL}`)
-				);
-			}
-
-			await browser.close();
-
-			resolve();
-		}
-
-		await page.exposeFunction(CLOSE_GLOBAL, close);
-
 		if (url) {
 			await page.goto(url, {waitUntil: 'networkidle0'});
 		} else {
@@ -80,6 +83,16 @@ async function run({html, script, url}) {
 		if (script) {
 			await page.addScriptTag({content: script});
 		}
+
+		await closed;
+
+		if (script && script.includes('__coverage__')) {
+			await writeCoverage(page);
+		}
+
+		await browser.close();
+
+		resolve();
 	});
 
 	done.browser = browser;
@@ -88,4 +101,4 @@ async function run({html, script, url}) {
 	return done;
 }
 
-module.exports = run;
+module.exports = runHeadless;
