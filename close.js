@@ -1,9 +1,9 @@
-// Convenience method to close window.
+// Convenience method to close window, if needed.
 // Useful for indicating test completion.
-function end() {
+function close() {
 	if (typeof window !== 'undefined') {
 		window.close();
 	}
 }
 
-module.exports = end;
+module.exports = close;
