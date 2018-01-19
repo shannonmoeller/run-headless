@@ -61,12 +61,12 @@ node_js:
 
 ### Writing Tests
 
-You can use any test runner you like that works in a browser and outputs to the console. Just make sure to run `window.close()` when all tests have completed. When writing tests that run in Node.js and the browser you may include the convenience helper `run-headless/end` to do this for you as needed.
+You can use any test runner you like that works in a browser and outputs to the console. Just make sure to run `window.close()` when all tests have completed. When writing tests that run in Node.js and the browser you may include the convenience helper `run-headless/close` to do this for you as needed.
 
 ```js
 // test.js
 
-const end = require('run-headless/end');
+const close = require('run-headless/close');
 const test = require('tape');
 
 test('should pass', t => {
@@ -74,7 +74,7 @@ test('should pass', t => {
     t.end();
 });
 
-test.onFinish(end);
+test.onFinish(close);
 ```
 
 ```command

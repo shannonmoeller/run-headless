@@ -1,5 +1,5 @@
 const tape = require('tape');
-const end = require('../end');
+const close = require('../close');
 const foo = require('./foo.js');
 const bar = require('./bar.js');
 
@@ -9,4 +9,4 @@ tape('should sum numbers', t => {
 	t.end();
 });
 
-tape.onFinish(end);
+tape.onFinish(close);
