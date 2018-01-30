@@ -26,7 +26,10 @@
   "homepage": "https://github.com/shannonmoeller/run-headless#readme",
   "repository": "shannonmoeller/run-headless",
   "license": "MIT",
-  "bin": "bin/run-headless",
+  "bin": {
+    "run-headless": "bin/run-headless",
+    "rn": "bin/run-headless"
+  },
   "main": "index.js",
   "files": [
     "*.js",
@@ -34,7 +37,8 @@
   ],
   "dependencies": {
     "minimist": "^1.2.0",
-    "puppeteer": "^1.0.0"
+    "puppeteer": "^1.0.0",
+    "uuid": "^3.2.1"
   },
   "devDependencies": {
     "blue-tape": "^1.0.0",

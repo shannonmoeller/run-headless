@@ -14,25 +14,28 @@ $ npm install --global run-headless
 
 ```man
 Usage: run-headless [options]
+       rn [options]
 
 Options:
 
-      --html <s>      Literal HTML to execute. Defaults to minimal skeleton.
-      --js <s>        Literal JavaScript to execute (default: stdin).
-      --url <s>       URL to load (overrides --html).
-      --close <s>     Close global function (default: \`__close__\`).
-      --coverage <s>  Coverage global variable (default: \`__coverage__\`).
-      --output <s>    Coverage output file (default: \`.nyc_output/<rand>.json\`).
-  -h, --help          Print help.
+      --html          Literal HTML to execute (default: minimal skeleton)
+      --js            Literal JavaScript to execute (default: stdin)
+      --url           URL to load (overrides --html)
+  -c, --close-var     Close global function (default: `__close__`)
+  -o, --coverage-var  Coverage global variable (default: `__coverage__`)
+  -d, --out-dir       Coverage output directory (default: `.nyc_output`)
+  -f, --out-file      Coverage output file (default: `<uuid>.json`)
+  -h, --help          Output usage information
+  -v, --version       Output version number
 ```
 
 ## Examples
 
 ```command
-$ echo 'console.log("hello world")' | run-headless
+$ echo "console.log('hello world')" | run-headless
 hello world
 
-$ run-headless --js 'console.log("hello world")'
+$ run-headless --js "console.log('hello world')"
 hello world
 ```
 
@@ -40,6 +43,7 @@ hello world
 $ cat index.js | run-headless
 $ rollup index.js | run-headless
 $ browserify index.js | run-headless
+$ nyc instrument index.js | run-headless && nyc report
 ```
 
 ```command
@@ -68,12 +72,11 @@ node_js:
 
 ### Browser Testing
 
-You can use any test runner you like that works in a browser and outputs to the console. Just make sure to run `window.__close__()` when all tests have completed. When writing tests that run in Node.js and the browser you may include the convenience helper `run-headless/close` to do this for you as needed.
+You can use any test runner you like that works in a browser and outputs to the console. Just make sure to run `window.__close__()` (or your custom `closeVar`) when all tests have completed.
 
 ```js
 // test.js
 
-const close = require('run-headless/close');
 const test = require('tape');
 
 test('should pass', t => {
@@ -81,7 +84,7 @@ test('should pass', t => {
     t.end();
 });
 
-test.onFinish(close);
+test.onFinish(window.__close__);
 ```
 
 ```command
@@ -99,13 +102,13 @@ All of 1 tests passed!
 
 ### `run(options): Runner`
 
-- `options` `{Object}`
-  - `html` `{String}` - Literal HTML to execute. Defaults to minimal skeleton.
-  - `js` `{String}` - Literal JavaScript to execute (default: `stdin`).
-  - `url` `{String}` - URL to load (overrides `html`).
-  - `close` `{String}` - Close global function (default: `__close__`).
-  - `coverage` `{String}` - Coverage global variable (default: `__coverage__`).
-  - `output` `{String}` - Coverage output file (default: `.nyc_output/<rand>.json`).
+- `options` `{Object}` See [usage](#usage).
+  - `html` `{String}`
+  - `js` `{String}`
+  - `closeVar` `{String}`
+  - `coverageVar` `{String}`
+  - `outDir` `{String}`
+  - `outFile` `{String}`
 
 The following example starts up a static file server with [express](http://npm.im/express), bundles test scripts with [rollup](http://npm.im/rollup), executes them in a [headless browser](http://npm.im/puppeteer), and prints the output to the console. (Assumes that your rollup config is generating a bundle with [nyc](http://npm.im/nyc)-compatible instrumented code).
 
@@ -141,7 +144,7 @@ $ nyc node test.js
 
 #### `.then()` and `.catch()`
 
-`Runner` is a thenable and awaitable [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) object. It resolves when execution has finished and the browser is closed.
+`Runner` is a thenable and awaitable [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) object. It resolves when the browser is closed.
 
 ### Runner Properties
 

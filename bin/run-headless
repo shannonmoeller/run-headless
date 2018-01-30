@@ -1,21 +1,24 @@
 #!/usr/bin/env node
 
 const minimist = require('minimist');
+const {version} = require('../package.json');
 const run = require('..');
 
-const args = minimist(process.argv.slice(2));
 const usage = `
 Usage: run-headless [options]
+       rn [options]
 
 Options:
 
-      --html <s>      Literal HTML to execute. Defaults to minimal skeleton.
-      --js <s>        Literal JavaScript to execute (default: stdin).
-      --url <s>       URL to load (overrides --html).
-      --close <s>     Close global function (default: \`__close__\`).
-      --coverage <s>  Coverage global variable (default: \`__coverage__\`).
-      --output <s>    Coverage output file (default: \`.nyc_output/<rand>.json\`).
-  -h, --help          Print help.
+      --html          Literal HTML to execute (default: minimal skeleton)
+      --js            Literal JavaScript to execute (default: stdin)
+      --url           URL to load (overrides --html)
+  -c, --close-var     Close global function (default: \`__close__\`)
+  -o, --coverage-var  Coverage global variable (default: \`__coverage__\`)
+  -d, --out-dir       Coverage output directory (default: \`.nyc_output\`)
+  -f, --out-file      Coverage output file (default: \`<uuid>.json\`)
+  -h, --help          Output usage information
+  -v, --version       Output version number
 
 Examples:
 
@@ -23,17 +26,48 @@ Examples:
   $ run-headless --js "console.log('hello world')"
   $ run-headless --html "$(cat index.html)" --js "$(cat index.js)"
   $ run-headless --url "https://google.com" --js "console.log(document.title)"
+  $ nyc instrument index.js | run-headless && nyc report
 `;
 
+const options = minimist(process.argv.slice(2), {
+	alias: {
+		c: ['close-var', 'closeVar'],
+		o: ['coverage-var', 'coverageVar'],
+		d: ['output-dir', 'outputDir'],
+		f: ['output-file', 'outputFile'],
+		h: 'help',
+		v: 'version'
+	},
+	boolean: [
+		'help',
+		'version'
+	],
+	string: [
+		'html',
+		'js',
+		'url',
+		'close-var',
+		'coverage-var',
+		'out-dir',
+		'out-file'
+	]
+});
+
 function main() {
-	if (args.h || args.help) {
+	if (options.help) {
 		console.log(usage);
 
 		return;
 	}
 
+	if (options.version) {
+		console.log(version);
+
+		return;
+	}
+
 	if (process.stdin.isTTY) {
-		run(args);
+		run(options);
 
 		return;
 	}
@@ -45,7 +79,7 @@ function main() {
 	});
 
 	process.stdin.on('end', () => {
-		run(Object.assign({js}, args));
+		run(Object.assign({js}, options));
 	});
 }
 

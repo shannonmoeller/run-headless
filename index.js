@@ -1,10 +1,10 @@
 const fs = require('fs');
 const path = require('path');
 const puppeteer = require('puppeteer');
+const uuid = require('uuid/v4');
 
-const CLOSE_GLOBAL = '__close__';
-const COVERAGE_GLOBAL = '__coverage__';
-
+const DEFAULT_CLOSE_VAR = '__close__';
+const DEFAULT_COVERAGE_VAR = '__coverage__';
 const DEFAULT_HTML = `
 <!doctype html>
 <html lang="en">
@@ -31,17 +31,18 @@ Object.assign(consoleTypes, {
 });
 
 function normalizeOptions(options) {
-	const {url, html, js, close, coverage, output} = options || {};
+	const {html, js, url, closeVar, coverageVar, outputDir, outputFile} = options;
 
 	return {
-		url,
-		html: String(html || DEFAULT_HTML),
-		js: String(js || ''),
-		close: close || CLOSE_GLOBAL,
-		coverage: coverage || COVERAGE_GLOBAL,
-		output: path.join(
+		html: html || DEFAULT_HTML,
+		js: js || '',
+		url: url || '',
+		closeVar: closeVar || DEFAULT_CLOSE_VAR,
+		coverageVar: coverageVar || DEFAULT_COVERAGE_VAR,
+		outputFile: path.join(
 			process.cwd(),
-			output || `.nyc_output/${Date.now()}.json`
+			outputFile ? '' : outputDir || `.nyc_output`,
+			outputFile || `${uuid()}.json`
 		)
 	};
 }
@@ -58,7 +59,7 @@ async function onError(err) {
 	throw await err;
 }
 
-async function awaitFunction(page, name) {
+async function awaitFunctionCall(page, name) {
 	return new Promise(resolve => {
 		page.exposeFunction(name, resolve);
 	});
@@ -80,9 +81,9 @@ async function writeCoverage(page, coverage, output) {
 	fs.writeFileSync(output, JSON.stringify(coverageJson), 'utf8');
 }
 
-async function exec(browser, page, options) {
-	let {url, html, js, close, coverage, output} = options;
-	const closed = awaitFunction(page, close);
+async function execScript(browser, page, options) {
+	let {html, js, url, closeVar, coverageVar, outputFile} = options;
+	const closed = awaitFunctionCall(page, closeVar);
 
 	if (url) {
 		await page.goto(url, {waitUntil: 'networkidle0'});
@@ -90,8 +91,8 @@ async function exec(browser, page, options) {
 		await page.setContent(html);
 	}
 
-	if ((!url || js) && !html.includes(close) && !js.includes(close)) {
-		js += `;window.${close}();`;
+	if ((!url || js) && !html.includes(closeVar) && !js.includes(closeVar)) {
+		js += `;window.${closeVar}();`;
 	}
 
 	if (js) {
@@ -100,8 +101,8 @@ async function exec(browser, page, options) {
 
 	await closed;
 
-	if (js && js.includes(coverage)) {
-		await writeCoverage(page, coverage, output);
+	if (js && js.includes(coverageVar)) {
+		await writeCoverage(page, coverageVar, outputFile);
 	}
 
 	await browser.close();
@@ -117,7 +118,7 @@ async function runHeadless(options) {
 	page.on('error', onError);
 	page.on('pageerror', onError);
 
-	const done = exec(browser, page, options);
+	const done = execScript(browser, page, options);
 
 	done.browser = browser;
 	done.page = page;
