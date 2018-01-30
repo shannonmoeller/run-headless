@@ -17,19 +17,22 @@ Usage: run-headless [options]
 
 Options:
 
-      --html <s>    Literal HTML to execute.
-      --script <s>  Literal JavaScript to execute (default: stdin).
-      --url <s>     URL to load (overrides --html).
-  -h, --help        Print help.
+      --html <s>      Literal HTML to execute. Defaults to minimal skeleton.
+      --js <s>        Literal JavaScript to execute (default: stdin).
+      --url <s>       URL to load (overrides --html).
+      --close <s>     Close global function (default: \`__close__\`).
+      --coverage <s>  Coverage global variable (default: \`__coverage__\`).
+      --output <s>    Coverage output file (default: \`.nyc_output/<rand>.json\`).
+  -h, --help          Print help.
 ```
 
 ## Examples
 
 ```command
-$ run-headless --script 'console.log("hello world")'
+$ echo 'console.log("hello world")' | run-headless
 hello world
 
-$ echo 'console.log("hello world")' | run-headless
+$ run-headless --js 'console.log("hello world")'
 hello world
 ```
 
@@ -41,12 +44,12 @@ $ browserify index.js | run-headless
 
 ```command
 $ run-headless --html "<script>console.log('hello world');</script>"
-$ run-headless --html "$(cat index.html)" --script "$(cat index.js)"
+$ run-headless --html "$(cat index.html)" --js "$(cat index.js)"
 ```
 
 ```command
 $ run-headless --url "http://localhost:3000/tests"
-$ run-headless --url "http://google.com" --script "console.log(document.title)"
+$ run-headless --url "https://google.com" --js "console.log(document.title)"
 ```
 
 ### CI
@@ -96,10 +99,13 @@ All of 1 tests passed!
 
 ### `run(options): Runner`
 
-- `options` `{Object}` - You must specify at least one of the following:
-  - `html` `{String}` - Literal HTML to execute.
-  - `script` `{String}` - Literal JavaScript to execute (default: `stdin`).
+- `options` `{Object}`
+  - `html` `{String}` - Literal HTML to execute. Defaults to minimal skeleton.
+  - `js` `{String}` - Literal JavaScript to execute (default: `stdin`).
   - `url` `{String}` - URL to load (overrides `html`).
+  - `close` `{String}` - Close global function (default: `__close__`).
+  - `coverage` `{String}` - Coverage global variable (default: `__coverage__`).
+  - `output` `{String}` - Coverage output file (default: `.nyc_output/<rand>.json`).
 
 The following example starts up a static file server with [express](http://npm.im/express), bundles test scripts with [rollup](http://npm.im/rollup), executes them in a [headless browser](http://npm.im/puppeteer), and prints the output to the console. (Assumes that your rollup config is generating a bundle with [nyc](http://npm.im/nyc)-compatible instrumented code).
 
@@ -118,7 +124,7 @@ const server = express
 
         await run({
             url: 'http://localhost:3000/tests.html',
-            script: code
+            js: code
         });
 
         server.close();

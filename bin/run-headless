@@ -9,10 +9,20 @@ Usage: run-headless [options]
 
 Options:
 
-      --html <s>    Literal HTML to execute.
-      --script <s>  Literal JavaScript to execute (default: stdin).
-      --url <s>     URL to load (overrides --html).
-  -h, --help        Print help.
+      --html <s>      Literal HTML to execute. Defaults to minimal skeleton.
+      --js <s>        Literal JavaScript to execute (default: stdin).
+      --url <s>       URL to load (overrides --html).
+      --close <s>     Close global function (default: \`__close__\`).
+      --coverage <s>  Coverage global variable (default: \`__coverage__\`).
+      --output <s>    Coverage output file (default: \`.nyc_output/<rand>.json\`).
+  -h, --help          Print help.
+
+Examples:
+
+  $ echo "console.log('hello world')" | run-headless
+  $ run-headless --js "console.log('hello world')"
+  $ run-headless --html "$(cat index.html)" --js "$(cat index.js)"
+  $ run-headless --url "https://google.com" --js "console.log(document.title)"
 `;
 
 function main() {
@@ -28,14 +38,14 @@ function main() {
 		return;
 	}
 
-	let script = '';
+	let js = '';
 
 	process.stdin.on('data', chunk => {
-		script += chunk;
+		js += chunk;
 	});
 
 	process.stdin.on('end', () => {
-		run(Object.assign({script}, args));
+		run(Object.assign({js}, args));
 	});
 }
 

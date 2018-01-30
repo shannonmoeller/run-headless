@@ -5,7 +5,7 @@ const puppeteer = require('puppeteer');
 const CLOSE_GLOBAL = '__close__';
 const COVERAGE_GLOBAL = '__coverage__';
 
-const defaultHtml = `
+const DEFAULT_HTML = `
 <!doctype html>
 <html lang="en">
 	<head>
@@ -14,10 +14,6 @@ const defaultHtml = `
 	</head>
     <body></body>
 </html>
-`;
-
-const closer = `
-;window.${CLOSE_GLOBAL}();
 `;
 
 const consoleTypes = Object
@@ -34,6 +30,22 @@ Object.assign(consoleTypes, {
 	timeEnd: 'log'
 });
 
+function normalizeOptions(options) {
+	const {url, html, js, close, coverage, output} = options || {};
+
+	return {
+		url,
+		html: String(html || DEFAULT_HTML),
+		js: String(js || ''),
+		close: close || CLOSE_GLOBAL,
+		coverage: coverage || COVERAGE_GLOBAL,
+		output: path.join(
+			process.cwd(),
+			output || `.nyc_output/${Date.now()}.json`
+		)
+	};
+}
+
 async function onConsole(msg) {
 	const type = consoleTypes[msg.type()] || 'log';
 	const args = msg.args().map(x => x.jsonValue());
@@ -42,39 +54,61 @@ async function onConsole(msg) {
 	console[type](...jsonArgs);
 }
 
-function onError(err) {
-	throw err;
+async function onError(err) {
+	throw await err;
 }
 
-async function writeCoverage(page) {
-	const coverage = await page.waitForFunction(`window.${COVERAGE_GLOBAL}`);
-	const output = await coverage.jsonValue();
+async function awaitFunction(page, name) {
+	return new Promise(resolve => {
+		page.exposeFunction(name, resolve);
+	});
+}
+
+async function writeCoverage(page, coverage, output) {
+	const coverageData = await page.waitForFunction(`window.${coverage}`);
+	const coverageJson = await coverageData.jsonValue();
 
 	// Filter out irrelevant coverage output.
 	// https://github.com/artberri/rollup-plugin-istanbul/issues/9
-	Object.keys(output).forEach(key => {
+	Object.keys(coverageJson).forEach(key => {
 		if (!key.includes(path.sep)) {
-			delete output[key];
+			delete coverageJson[key];
 		}
 	});
 
-	// Assumes `nyc` has created output directory.
-	fs.writeFileSync(
-		path.join(process.cwd(), '.nyc_output', `${Date.now()}.json`),
-		JSON.stringify(output),
-		'utf8'
-	);
+	// Assumes output directory exists.
+	fs.writeFileSync(output, JSON.stringify(coverageJson), 'utf8');
 }
 
-async function runHeadless({html, script, url}) {
-	html = String(html || defaultHtml);
-	script = String(script || '');
+async function exec(browser, page, options) {
+	let {url, html, js, close, coverage, output} = options;
+	const closed = awaitFunction(page, close);
 
-	function addCloser() {
-		if (!html.includes(CLOSE_GLOBAL) && !script.includes(CLOSE_GLOBAL)) {
-			script += closer;
-		}
+	if (url) {
+		await page.goto(url, {waitUntil: 'networkidle0'});
+	} else {
+		await page.setContent(html);
 	}
+
+	if ((!url || js) && !html.includes(close) && !js.includes(close)) {
+		js += `;window.${close}();`;
+	}
+
+	if (js) {
+		await page.addScriptTag({content: js});
+	}
+
+	await closed;
+
+	if (js && js.includes(coverage)) {
+		await writeCoverage(page, coverage, output);
+	}
+
+	await browser.close();
+}
+
+async function runHeadless(options) {
+	options = normalizeOptions(options);
 
 	const browser = await puppeteer.launch();
 	const page = await browser.newPage();
@@ -83,35 +117,7 @@ async function runHeadless({html, script, url}) {
 	page.on('error', onError);
 	page.on('pageerror', onError);
 
-	const closed = new Promise(async resolve => {
-		await page.exposeFunction(CLOSE_GLOBAL, resolve);
-	});
-
-	const done = new Promise(async resolve => {
-		if (url) {
-			await page.goto(url, {waitUntil: 'networkidle0'});
-		} else {
-			addCloser();
-
-			await page.setContent(html);
-		}
-
-		if (script) {
-			addCloser();
-
-			await page.addScriptTag({content: script});
-		}
-
-		await closed;
-
-		if (script && script.includes(COVERAGE_GLOBAL)) {
-			await writeCoverage(page);
-		}
-
-		await browser.close();
-
-		resolve();
-	});
+	const done = exec(browser, page, options);
 
 	done.browser = browser;
 	done.page = page;
