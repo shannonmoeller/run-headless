@@ -1,5 +1,4 @@
 const test = require('blue-tape');
-const close = require('../close');
 const foo = require('./foo.js');
 const bar = require('./bar.js');
 
@@ -13,4 +12,6 @@ test('should sum numbers again', async t => {
 	t.comment('hello from test');
 });
 
-test.onFinish(close);
+if (typeof window !== 'undefined') {
+	test.onFinish(window.__close__);
+}
