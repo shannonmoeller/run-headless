@@ -28,7 +28,7 @@
   "license": "MIT",
   "bin": {
     "run-headless": "bin/run-headless",
-    "rn": "bin/run-headless"
+    "rh": "bin/run-headless"
   },
   "main": "index.js",
   "files": [

@@ -14,7 +14,7 @@ $ npm install --global run-headless
 
 ```man
 Usage: run-headless [options]
-       rn [options]
+       rh [options]
 
 Options:
 
