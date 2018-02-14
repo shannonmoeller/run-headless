@@ -11,7 +11,7 @@
     "report": "nyc report -r text-lcov | coveralls",
     "pretest": "xo --fix",
     "precommit": "npm run test && git add .",
-    "prepublishOnly": "git diff-index --quiet HEAD"
+    "prepublishOnly": "run-s test build"
   },
   "keywords": [
     "browser",
@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "blue-tape": "^1.0.0",
-    "browserify": "^15.2.0",
+    "browserify": "^16.1.0",
     "coveralls": "^3.0.0",
     "husky": "^0.14.3",
     "npm-run-all": "^4.1.2",
