@@ -16,22 +16,29 @@ const DEFAULT_HTML = `
 </html>
 `;
 
-const consoleTypes = Object
-	.keys(console)
-	.reduce((a, b) => {
-		a[b] = b;
-		return a;
-	}, {});
+const consoleTypes = Object.keys(console).reduce((a, b) => {
+	a[b] = b;
+
+	return a;
+}, {});
 
 Object.assign(consoleTypes, {
 	startGroup: 'group',
 	endGroup: 'groupEnd',
 	time: 'log',
-	timeEnd: 'log'
+	timeEnd: 'log',
 });
 
 function normalizeOptions(options) {
-	const {html, js, url, closeVar, coverageVar, outputDir, outputFile} = options;
+	const {
+		html,
+		js,
+		url,
+		closeVar,
+		coverageVar,
+		outputDir,
+		outputFile,
+	} = options;
 
 	return {
 		html: html || DEFAULT_HTML,
@@ -43,13 +50,13 @@ function normalizeOptions(options) {
 			process.cwd(),
 			outputFile ? '' : outputDir || `.nyc_output`,
 			outputFile || `${uuid()}.json`
-		)
+		),
 	};
 }
 
 async function onConsole(msg) {
 	const type = consoleTypes[msg.type()] || 'log';
-	const args = msg.args().map(x => x.jsonValue());
+	const args = msg.args().map((x) => x.jsonValue());
 	const jsonArgs = await Promise.all(args);
 
 	console[type](...jsonArgs);
@@ -60,7 +67,7 @@ async function onError(err) {
 }
 
 async function awaitFunctionCall(page, name) {
-	return new Promise(resolve => {
+	return new Promise((resolve) => {
 		page.exposeFunction(name, resolve);
 	});
 }
@@ -71,7 +78,7 @@ async function writeCoverage(page, coverage, output) {
 
 	// Filter out irrelevant coverage output.
 	// https://github.com/artberri/rollup-plugin-istanbul/issues/9
-	Object.keys(coverageJson).forEach(key => {
+	Object.keys(coverageJson).forEach((key) => {
 		if (!key.includes(path.sep)) {
 			delete coverageJson[key];
 		}
@@ -82,26 +89,31 @@ async function writeCoverage(page, coverage, output) {
 }
 
 async function execScript(browser, page, options) {
-	let {html, js, url, closeVar, coverageVar, outputFile} = options;
+	const { html, js, url, closeVar, coverageVar, outputFile } = options;
 	const closed = awaitFunctionCall(page, closeVar);
+	let content = js;
 
 	if (url) {
-		await page.goto(url, {waitUntil: 'networkidle0'});
+		await page.goto(url, { waitUntil: 'networkidle0' });
 	} else {
 		await page.setContent(html);
 	}
 
-	if ((!url || js) && !html.includes(closeVar) && !js.includes(closeVar)) {
-		js += `;window.${closeVar}();`;
+	if (
+		(!url || content) &&
+		!html.includes(closeVar) &&
+		!content.includes(closeVar)
+	) {
+		content += `;window.${closeVar}();`;
 	}
 
-	if (js) {
-		await page.addScriptTag({content: js});
+	if (content) {
+		await page.addScriptTag({ content });
 	}
 
 	await closed;
 
-	if (js && js.includes(coverageVar)) {
+	if (content && content.includes(coverageVar)) {
 		await writeCoverage(page, coverageVar, outputFile);
 	}
 

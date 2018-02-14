@@ -3,15 +3,18 @@
   "version": "2.0.1",
   "description": "The easiest way of running code in a modern headless browser environment.",
   "scripts": {
+    "lint": "run-s lint-*",
+    "lint-prettier": "prettier --ignore-path .gitignore --write \"**/*.js\"",
+    "lint-eslint": "eslint --ignore-path .gitignore --fix \"**/*.js\"",
     "test": "nyc run-s test-*",
-    "test-node": "tape test/index.js | tap-diff",
-    "test-browser": "browserify test/index.js | bin/run-headless | tap-diff",
+    "test-node": "NODE_ENV=test tape test/index.js | tap-diff",
+    "test-browser": "NODE_ENV=test browserify test/index.js | bin/run-headless | tap-diff",
     "test-html": "bin/run-headless --html '<script>console.log(\"hello world\")</script>'",
     "test-url": "bin/run-headless --url 'https://google.com' --js 'console.log(document.title)'",
     "report": "nyc report -r text-lcov | coveralls",
-    "pretest": "xo --fix",
-    "precommit": "npm run test && git add .",
-    "prepublishOnly": "run-s test build"
+    "pretest": "run-s lint",
+    "precommit": "run-s test && git add .",
+    "prepublishOnly": "run-s test"
   },
   "keywords": [
     "browser",
@@ -23,7 +26,6 @@
     "test"
   ],
   "author": "Shannon Moeller <me@shannonmoeller> (http://shannonmoeller.com)",
-  "homepage": "https://github.com/shannonmoeller/run-headless#readme",
   "repository": "shannonmoeller/run-headless",
   "license": "MIT",
   "bin": {
@@ -32,8 +34,9 @@
   },
   "main": "index.js",
   "files": [
+    "bin",
     "*.js",
-    "bin"
+    "*.md"
   ],
   "dependencies": {
     "minimist": "^1.2.0",
@@ -44,26 +47,35 @@
     "blue-tape": "^1.0.0",
     "browserify": "^16.1.0",
     "coveralls": "^3.0.0",
+    "eslint": "^4.17.0",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-config-whim": "^3.1.0",
     "husky": "^0.14.3",
     "npm-run-all": "^4.1.2",
     "nyc": "^11.4.1",
+    "prettier": "^1.10.2",
     "tap-diff": "^0.1.1",
-    "tape": "^4.8.0",
-    "xo": "^0.18.2"
+    "tape": "^4.8.0"
+  },
+  "prettier": {
+    "arrowParens": "always",
+    "singleQuote": true,
+    "trailingComma": "es5"
+  },
+  "eslintConfig": {
+    "extends": [
+      "eslint-config-whim",
+      "eslint-config-prettier"
+    ]
   },
   "nyc": {
+    "include": [
+      "bin/**",
+      "*.js"
+    ],
     "reporter": [
       "lcov",
       "text"
-    ],
-    "exclude": [
-      "node_modules"
-    ]
-  },
-  "xo": {
-    "envs": [
-      "browser",
-      "node"
     ]
   },
   "engines": {
