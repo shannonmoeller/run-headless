@@ -156,17 +156,7 @@ A puppeteer [Browser](https://github.com/GoogleChrome/puppeteer/blob/HEAD/docs/a
 
 A puppeteer [Page](https://github.com/GoogleChrome/puppeteer/blob/HEAD/docs/api.md#class-page) instance.
 
-## Contribute
-
-Standards for this project, including tests, code coverage, and semantics are enforced with a build tool. Pull requests must include passing tests with 100% code coverage and no linting errors.
-
-### Test
-
-```command
-$ npm test
-```
-
-### Acknowledgements
+## Acknowledgements
 
 - [browser-run](http://npm.im/browser-run)
 - [run-browser](http://npm.im/run-browser)
