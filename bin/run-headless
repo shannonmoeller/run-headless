@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const minimist = require('minimist');
-const {version} = require('../package.json');
+const { version } = require('../package.json');
 const run = require('..');
 
 const usage = `
@@ -36,12 +36,9 @@ const options = minimist(process.argv.slice(2), {
 		d: ['output-dir', 'outputDir'],
 		f: ['output-file', 'outputFile'],
 		h: 'help',
-		v: 'version'
+		v: 'version',
 	},
-	boolean: [
-		'help',
-		'version'
-	],
+	boolean: ['help', 'version'],
 	string: [
 		'html',
 		'js',
@@ -49,8 +46,8 @@ const options = minimist(process.argv.slice(2), {
 		'close-var',
 		'coverage-var',
 		'out-dir',
-		'out-file'
-	]
+		'out-file',
+	],
 });
 
 function main() {
@@ -74,16 +71,16 @@ function main() {
 
 	let js = '';
 
-	process.stdin.on('data', chunk => {
+	process.stdin.on('data', (chunk) => {
 		js += chunk;
 	});
 
 	process.stdin.on('end', () => {
-		run(Object.assign({js}, options));
+		run(Object.assign({ js }, options));
 	});
 }
 
-process.on('unhandledRejection', err => {
+process.on('unhandledRejection', (err) => {
 	throw err;
 });
 
